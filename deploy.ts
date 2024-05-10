@@ -1,7 +1,7 @@
 import { Collection, CommandInteraction, REST, RESTPostAPIChatInputApplicationCommandsJSONBody, Routes } from "discord.js";
-import { CommandList } from "./commands/commandRegist";
-import { CommandRegistType } from "./commands/constants/types";
-import { EnvConst } from "./commands/constants/constants";
+import { CommandList } from "./scripts/commandRegist";
+import { CommandRegistType } from "./scripts/constants/types";
+import { EnvConst } from "./scripts/constants/constants";
 
 declare module "discord.js" {
     export interface Client {

@@ -1,7 +1,7 @@
 // Require the necessary discord.js classes
 import { Client, Collection, Events, GatewayIntentBits, EmbedBuilder, TextChannel } from 'discord.js';
-import { ColorConst, EnvConst } from './commands/constants/constants';
-import CommandRegist from './commands/commandRegist';
+import { ColorConst, DevTestChoice, EnvConst } from './scripts/constants/constants';
+import CommandRegist from './scripts/commandRegist';
 
 //Expend a "Commannds" variable
 //From https://stackoverflow.com/questions/62860164/stuck-with-adding-variable-to-discord-client-object-typescript
@@ -28,7 +28,9 @@ client.once(Events.ClientReady, readyClient => {
 		.setColor(ColorConst.EMBED_ANNOUN_COLOR)
 		.setTitle("重啟成功通知")
 		.setDescription("我回來了！另外，所有指令將會在現在重新被執行。當前是在"+EnvConst.NODE_ENV);
-	channelNoti.send({embeds: [embed]});
+	if(EnvConst.NODE_ENV !== DevTestChoice.DEVELOPMENT || (!DevTestChoice.isDisableOnlineEmbed && EnvConst.NODE_ENV === DevTestChoice.DEVELOPMENT)){
+		channelNoti.send({embeds: [embed]});
+	}
 });
 
 client.on(Events.InteractionCreate, async interaction => {

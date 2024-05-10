@@ -1,9 +1,11 @@
 import { Client, CommandInteraction, REST, Routes } from "discord.js";
 import { CommandRegistType } from "./constants/types";
-import PING from "./ping";
+import PING from "./commands/ping";
+import HELP from "./commands/help";
 
 export const CommandList : Array<CommandRegistType> = [
     PING,
+    HELP,
 ]
 
 export default function CommandRegist(client : Client){
@@ -11,7 +13,6 @@ export default function CommandRegist(client : Client){
     CommandList.map((cmd : any) => {
         if(cmd !== undefined && cmd.data !== undefined){
             client.commands.set(cmd.data.name || "?", cmd)
-            console.log(cmd)
             cmdSuccessRegist ++
         }
     })

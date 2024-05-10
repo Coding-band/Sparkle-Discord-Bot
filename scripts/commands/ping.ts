@@ -1,5 +1,5 @@
 import { CacheType, CommandInteraction, Interaction, MessageInteraction, SlashCommandBuilder } from 'discord.js';
-import { CommandRegistType } from './constants/types';
+import { CommandRegistType } from '../constants/types';
 
 const PING : CommandRegistType = {
 	data: new SlashCommandBuilder()
