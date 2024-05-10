@@ -1,0 +1,19 @@
+{
+  "name": "com.voc2048.discord.sparklebot",
+  "version": "1.0.0",
+  "description": "A bot for Coding Band Official Discord Server",
+  "main": "bot.ts",
+  "scripts": {
+    "test": "/sparkletest"
+  },
+  "author": "Vocaloid2048",
+  "license": "ISC",
+  "dependencies": {
+    "canvas": "^2.11.2",
+    "discord.js": "^14.15.2",
+    "dotenv": "^16.4.5",
+    "node-cron": "^3.0.3",
+    "pm2": "^5.3.1",
+    "sqlite3": "^5.1.7"
+  }
+}
