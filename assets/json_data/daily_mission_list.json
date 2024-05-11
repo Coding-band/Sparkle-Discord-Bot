@@ -1,0 +1,11 @@
+{
+  "mission_list":[
+    {
+      "title" : "幫幫帕姆打掃車廂",
+      "desc" : "感謝開拓者的幫忙，今天總算輕鬆了點帕！",
+      "img" : "emoji/20001.png",
+      "choices" : ["🧹幫忙打掃","X不幫忙打掃"],
+      "choices_action" : ["MISSION_FINISH","MISSION_IGNORE"]
+    }
+  ]
+}
