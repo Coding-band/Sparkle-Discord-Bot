@@ -2,6 +2,8 @@
 import { Client, Collection, Events, GatewayIntentBits, EmbedBuilder, TextChannel } from 'discord.js';
 import { ColorConst, DevTestChoice, EnvConst } from './scripts/constants/constants';
 import CommandRegist from './scripts/commandRegist';
+import EventHandlersInit from './scripts/eventHandler';
+import { generateDailyMissions } from './scripts/constants/events';
 
 //Expend a "Commannds" variable
 //From https://stackoverflow.com/questions/62860164/stuck-with-adding-variable-to-discord-client-object-typescript
@@ -31,6 +33,9 @@ client.once(Events.ClientReady, readyClient => {
 	if (EnvConst.NODE_ENV !== DevTestChoice.DEVELOPMENT || (!DevTestChoice.isDisableOnlineEmbed && EnvConst.NODE_ENV === DevTestChoice.DEVELOPMENT)) {
 		channelNoti.send({ embeds: [embed] });
 	}
+	
+	//EventHandlersInit(readyClient);
+	generateDailyMissions(readyClient,1)
 });
 
 client.on(Events.InteractionCreate, async interaction => {
