@@ -6,9 +6,9 @@ import CommandRegist from './scripts/commandRegist';
 //Expend a "Commannds" variable
 //From https://stackoverflow.com/questions/62860164/stuck-with-adding-variable-to-discord-client-object-typescript
 declare module "discord.js" {
-    export interface Client {
-        commands: Collection<unknown, any>
-    }
+	export interface Client {
+		commands: Collection<unknown, any>
+	}
 }
 
 // Create a new client instance
@@ -27,9 +27,9 @@ client.once(Events.ClientReady, readyClient => {
 	var embed = new EmbedBuilder()
 		.setColor(ColorConst.EMBED_ANNOUN_COLOR)
 		.setTitle("重啟成功通知")
-		.setDescription("我回來了！另外，所有指令將會在現在重新被執行。當前是在"+EnvConst.NODE_ENV);
-	if(EnvConst.NODE_ENV !== DevTestChoice.DEVELOPMENT || (!DevTestChoice.isDisableOnlineEmbed && EnvConst.NODE_ENV === DevTestChoice.DEVELOPMENT)){
-		channelNoti.send({embeds: [embed]});
+		.setDescription("我回來了！另外，所有指令將會在現在重新被執行。當前是在" + EnvConst.NODE_ENV);
+	if (EnvConst.NODE_ENV !== DevTestChoice.DEVELOPMENT || (!DevTestChoice.isDisableOnlineEmbed && EnvConst.NODE_ENV === DevTestChoice.DEVELOPMENT)) {
+		channelNoti.send({ embeds: [embed] });
 	}
 });
 
@@ -42,12 +42,12 @@ client.on(Events.InteractionCreate, async interaction => {
 		return;
 	}
 
-	try{
+	try {
 		await command.execute(interaction);
-	}catch(error){
+	} catch (error) {
 		if (interaction.replied || interaction.deferred) {
 			await interaction.followUp({ content: 'There was an error while executing this command!', ephemeral: true });
-		}else {
+		} else {
 			await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
 		}
 	}
