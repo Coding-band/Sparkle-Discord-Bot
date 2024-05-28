@@ -24,10 +24,20 @@ export enum EventTypeEnum{
   Daily, LimitTimeMission, Battle, Selection
 }
 
+//以下所有項目均可為undefined
+export type EventProgress = {
+  dailyEventFinishedCount ?: number; //完成該每日任務的用戶數目
+  limitEventMax ?: number; //該限時/挑戰任務的目標進度
+  limitEventProgress ?: number; //該限時/挑戰任務的當前進度
+  choiceEventData ?: []; //該分歧事件每一選項的選擇次數
+}
+
 export type EventInfo = {
-  name: string;
-  desc: string;
-  type: EventTypeEnum;
-  embed: EmbedBuilder;
+  name: string; //活動名字
+  desc: string; //活動簡介
+  type: EventTypeEnum; //活動類型
+  embed: EmbedBuilder; //活動Embed
+  progress: EventProgress; //活動進度
+  endTime: number; //活動完結時間
   execute: (() => Promise<void>)
 }
