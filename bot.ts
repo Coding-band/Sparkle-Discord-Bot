@@ -1,9 +1,8 @@
 // Require the necessary discord.js classes
-import { Client, Collection, Events, GatewayIntentBits, EmbedBuilder, TextChannel, AttachmentBuilder, REST, Routes } from 'discord.js';
+import { Client, Events, GatewayIntentBits, EmbedBuilder, TextChannel } from 'discord.js';
 import { ColorConst, DevTestChoice, EnvConst } from './scripts/constants/constants';
 import commandRegist from './scripts/commandRegist';
 import EventHandlersInit from './scripts/eventHandler';
-import { generateDailyMissions } from './scripts/constants/events';
 import { initDatabase } from './scripts/database';
 import { sparkleAprilFools2025 } from './scripts/constants/specials';
 import { autoBanSpammer } from './scripts/automod';
@@ -40,7 +39,16 @@ client.once(Events.ClientReady, async (readyClient) => {
     console.error(error);
   }
 
-	//EventHandlersInit(readyClient);
+	// 恢復離線期間發送但仍在可恢復時限內的任務 collectors（最多 24 小時）
+	try {
+		const { restoreMissionCollectors } = await import('./scripts/constants/events');
+		await restoreMissionCollectors(readyClient, 24);
+		console.log('已嘗試恢復最近任務 collectors');
+	} catch (e) {
+		console.error('恢復 collectors 發生錯誤', e);
+	}
+
+	EventHandlersInit(readyClient);
 
 	//generateDailyMissions(readyClient, 1)
 	//sparkleAprilFools2025(channelCommand);
@@ -48,7 +56,7 @@ client.once(Events.ClientReady, async (readyClient) => {
 
 client.on(Events.InteractionCreate, async interaction => {
 	if (!interaction.isChatInputCommand()) return;
-	const command = interaction.client.commands.get(interaction.commandName);
+	const command = (interaction.client as any).commands.get(interaction.commandName);
 
 	if (!command) {
 		console.error(`No command matching ${interaction.commandName} was found.`);

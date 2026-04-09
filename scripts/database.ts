@@ -17,10 +17,16 @@ export function initDatabase() {
                 timestamp INTEGER NOT NULL
             )
         `);
-        // 嘗試加入 mission_id 欄位（針對已經存在的資料表更新）
-        db.run(`ALTER TABLE daily_mission_logs ADD COLUMN mission_id TEXT DEFAULT ''`, (err) => {
-            // 如果欄位已存在會拋出錯誤，可以直接忽略
-        });
+        
+        db.run(`
+            CREATE TABLE IF NOT EXISTS mission_messages (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                mission_id TEXT NOT NULL UNIQUE,
+                message_id TEXT NOT NULL,
+                channel_id TEXT NOT NULL,
+                timestamp INTEGER NOT NULL
+            )
+        `);
     });
 }
 
@@ -38,15 +44,12 @@ export function logDailyMission(userId: string, action: string, missionId: strin
     });
 }
 
-// 檢查用戶今天是否已經完成該任務（基於 mission_id）
+// 檢查用戶今天是否已經完成該任務（基於 message_id）
 export function hasUserDoneMissionToday(userId: string, missionId: string): Promise<boolean> {
-    return new Promise((resolve, reject) => {
-        const startOfDay = new Date();
-        startOfDay.setHours(0, 0, 0, 0);
-        
+    return new Promise((resolve, reject) => {        
         db.get(
-            `SELECT COUNT(*) as count FROM daily_mission_logs WHERE user_id = ? AND mission_id = ? AND timestamp >= ?`,
-            [userId, missionId, startOfDay.getTime()],
+            `SELECT COUNT(*) as count FROM daily_mission_logs WHERE user_id = ? AND mission_id = ?`,
+            [userId, missionId],
             (err, row: any) => {
                 if (err) reject(err);
                 else resolve(row.count > 0);
@@ -55,7 +58,7 @@ export function hasUserDoneMissionToday(userId: string, missionId: string): Prom
     });
 }
 
-// 取得今天完成該任務的總人數（基於 mission_id）
+// 取得今天完成該任務的總人數（基於 message_id）
 export function getTodayMissionCount(missionId: string): Promise<number> {
     return new Promise((resolve, reject) => {
         const startOfDay = new Date();
@@ -69,5 +72,37 @@ export function getTodayMissionCount(missionId: string): Promise<number> {
                 else resolve(row.count);
             }
         );
+    });
+}
+
+export function getMissionMessage(missionId: string): Promise<any | null> {
+    return new Promise((resolve, reject) => {
+        db.get(`SELECT mission_id, message_id, channel_id, timestamp FROM mission_messages WHERE mission_id = ?`, [missionId], (err, row) => {
+            if (err) reject(err);
+            else resolve(row || null);
+        });
+    });
+}
+
+// 儲存發送的任務訊息 mapping
+export function saveMissionMessage(missionId: string, messageId: string, channelId: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+        const timestamp = Date.now();
+        db.run(`INSERT INTO mission_messages (mission_id, message_id, channel_id, timestamp) VALUES (?, ?, ?, ?)`,
+            [missionId, messageId, channelId, timestamp],
+            function(err) {
+                if (err) reject(err);
+                else resolve();
+            }
+        );
+    });
+}
+
+export function getRecentMissionMessages(sinceTimestamp: number): Promise<Array<any>> {
+    return new Promise((resolve, reject) => {
+        db.all(`SELECT mission_id, message_id, channel_id, timestamp FROM mission_messages WHERE timestamp >= ?`, [sinceTimestamp], (err, rows) => {
+            if (err) reject(err);
+            else resolve(rows || []);
+        });
     });
 }

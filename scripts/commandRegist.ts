@@ -1,5 +1,5 @@
 import { Client, Collection, CommandInteraction, REST, Routes } from "discord.js";
-import { CommandRegistType } from "./constants/types";
+
 import fs from "fs";
 import path from "path";
 function getCommandFiles(dirPath: string): string[] {
@@ -30,7 +30,7 @@ const rest = new REST({ version: '10' }).setToken(process.env.TOKEN_KEY!);
 
 export default async function commandRegist(client: Client) {
   // 擴充並初始化 commands 集合，供指令註冊與查找使用
-  client.commands = new Collection();
+  (client as any).commands = new Collection();
 
   let cmdSuccessRegist = 0;
   for (const filePath of commandFiles) {
@@ -42,7 +42,7 @@ export default async function commandRegist(client: Client) {
 
       for (const command of commandArray) {
         if (command && 'data' in command && 'execute' in command) {
-          client.commands.set(command.data.name, command);
+          (client as any).commands.set(command.data.name, command);
           cmdSuccessRegist++;
           console.log(`成功登錄指令: ${command.data.name}`);
         } else {
@@ -54,7 +54,7 @@ export default async function commandRegist(client: Client) {
     }
   }
 
-  const commandsData = Array.from(client.commands.values()).map(command => command.data.toJSON());
+  const commandsData = Array.from((client as any).commands.values()).map((command: any) => command.data.toJSON());
 
  await rest.put(
     Routes.applicationCommands(process.env.BotID!),

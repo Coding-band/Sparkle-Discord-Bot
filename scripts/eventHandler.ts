@@ -1,7 +1,7 @@
 
 import { Client } from 'discord.js';
 import cron from 'node-cron';
-import { generateDailyMissions } from './constants/events';
+import { sendDailyMissions } from './constants/events';
 
 /**
  # ┌────────────── second (optional)
@@ -25,14 +25,11 @@ import { generateDailyMissions } from './constants/events';
 
  */
 
-export default async function EventHandlersInit(client : Client){
-  //cron.schedule('0 0 6 * * *', () => {
-  cron.schedule('0 10 2 * * *', () => {
-    {
-      //Schedule of DailyMission
-      generateDailyMissions(client,1);
-    }
-    }, {
-      scheduled: true
+export default async function EventHandlersInit(client: Client) {
+  // 每日任務 - 早上6點
+  cron.schedule('0 0 6 * * *', () => {
+    sendDailyMissions(client);
+  }, {
+    scheduled: true
   });
 }
