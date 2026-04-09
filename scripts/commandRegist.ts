@@ -1,4 +1,4 @@
-import { Client, CommandInteraction, REST, Routes } from "discord.js";
+import { Client, Collection, CommandInteraction, REST, Routes } from "discord.js";
 import { CommandRegistType } from "./constants/types";
 import fs from "fs";
 import path from "path";
@@ -29,6 +29,9 @@ const commandFiles = getCommandFiles(functionPath);
 const rest = new REST({ version: '10' }).setToken(process.env.TOKEN_KEY!);
 
 export default async function commandRegist(client: Client) {
+  // 擴充並初始化 commands 集合，供指令註冊與查找使用
+  client.commands = new Collection();
+
   let cmdSuccessRegist = 0;
   for (const filePath of commandFiles) {
     try {
@@ -51,12 +54,11 @@ export default async function commandRegist(client: Client) {
     }
   }
 
-  
-    const commandsData = Array.from(client.commands.values()).map(command => command.data.toJSON());
+  const commandsData = Array.from(client.commands.values()).map(command => command.data.toJSON());
 
-    await rest.put(
-      Routes.applicationCommands(client.user!.id),
-      { body: commandsData },
-    );
+ await rest.put(
+    Routes.applicationCommands(process.env.BotID!),
+    { body: commandsData },
+  );
   console.log(`共有${cmdSuccessRegist}項指令成功登錄`);
 }

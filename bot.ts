@@ -19,9 +19,6 @@ const client = new Client({ intents: [
 	GatewayIntentBits.DirectMessages]
 });
 
-// 擴充並初始化 commands 集合，供指令註冊與查找使用
-client.commands = new Collection();
-
 client.once(Events.ClientReady, async (readyClient) => {
 	console.log(`Ready! Logged in as ${readyClient.user.tag}`);
 	const channelNoti = readyClient.channels.cache.get(process.env.AnnouncementChannel!) as TextChannel;
