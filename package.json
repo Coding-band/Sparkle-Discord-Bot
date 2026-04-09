@@ -5,7 +5,8 @@
   "main": "bot.ts",
   "type": "module",
   "scripts": {
-    "test": "/sparkletest"
+    "test": "/sparkletest",
+    "start": "tsx bot.ts"
   },
   "author": "Vocaloid2048",
   "license": "ISC",

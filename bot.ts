@@ -4,6 +4,11 @@ import { ColorConst, DevTestChoice, EnvConst } from './scripts/constants/constan
 import CommandRegist from './scripts/commandRegist';
 import EventHandlersInit from './scripts/eventHandler';
 import { generateDailyMissions } from './scripts/constants/events';
+import { initDatabase } from './scripts/database';
+import { sparkleAprilFools2025 } from './scripts/constants/specials';
+
+// 啟動與初始化資料庫
+initDatabase();
 
 //Expend a "Commannds" variable
 //From https://stackoverflow.com/questions/62860164/stuck-with-adding-variable-to-discord-client-object-typescript
@@ -36,29 +41,9 @@ client.once(Events.ClientReady, readyClient => {
 	}
 
 	//EventHandlersInit(readyClient);
-	generateDailyMissions(readyClient, 1)
-
-	/*
-		const letterMsg = `<@&1200618996970561629>
-# 嘿，開拓者！
-
-## 你猜怎麼著？
-我今天早上發現了一個超瘋狂的社交軟件，名字叫什麼 *「邦不了」*
-管它叫什麼，反正超好玩！裏面超多有趣的內容，簡直完美適合我的下一個惡作劇。
-
-已經截圖了，現在發給你，保證你笑到*摔倒*，忘了上車的事。後會有期。
-
-「焰錦遊魚」
-花火❤️
-
--# 2025年4月1日
-`
-const attach = new AttachmentBuilder("E:\\HonkaiStargazer\\ServerDiscordBot\\Sparkle\\assets\\images\\20250401.png", { name: '20250401.png' })
-channelCommand.send(
-	{ content:letterMsg,
-		files: [attach] }
-);
-	*/
+	
+	//generateDailyMissions(readyClient, 1)
+	//sparkleAprilFools2025(channelCommand);
 });
 
 client.on(Events.InteractionCreate, async interaction => {
@@ -83,10 +68,7 @@ client.on(Events.InteractionCreate, async interaction => {
 
 client.on(Events.MessageCreate, message => {
 	console.log(message.content)
-	message.channel.send("DLL")
-
 });
-
 
 // Log in to Discord with your client's token
 client.login(process.env.TOKEN_KEY);
