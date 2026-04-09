@@ -6,6 +6,7 @@ import EventHandlersInit from './scripts/eventHandler';
 import { generateDailyMissions } from './scripts/constants/events';
 import { initDatabase } from './scripts/database';
 import { sparkleAprilFools2025 } from './scripts/constants/specials';
+import { autoBanSpammer } from './scripts/automod';
 
 // 啟動與初始化資料庫
 initDatabase();
@@ -19,7 +20,12 @@ declare module "discord.js" {
 }
 
 // Create a new client instance
-const client = new Client({ intents: [GatewayIntentBits.Guilds] });
+const client = new Client({ intents: [
+	GatewayIntentBits.Guilds, 
+	GatewayIntentBits.MessageContent,
+	GatewayIntentBits.GuildMessages, 
+	GatewayIntentBits.DirectMessages]
+});
 
 //Regist Commands
 client.commands = new Collection();
@@ -41,7 +47,7 @@ client.once(Events.ClientReady, readyClient => {
 	}
 
 	//EventHandlersInit(readyClient);
-	
+
 	//generateDailyMissions(readyClient, 1)
 	//sparkleAprilFools2025(channelCommand);
 });
@@ -66,8 +72,9 @@ client.on(Events.InteractionCreate, async interaction => {
 	}
 });
 
-client.on(Events.MessageCreate, message => {
-	console.log(message.content)
+client.on(Events.MessageCreate, async (message) => {
+	//Auto Ban Spammer
+	await autoBanSpammer(client, message, process.env.SpammerChannel!, process.env.AutoModChannel!);
 });
 
 // Log in to Discord with your client's token
