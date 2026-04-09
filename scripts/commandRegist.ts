@@ -1,20 +1,62 @@
 import { Client, CommandInteraction, REST, Routes } from "discord.js";
 import { CommandRegistType } from "./constants/types";
-import PING from "./commands/ping";
-import HELP from "./commands/help";
+import fs from "fs";
+import path from "path";
+function getCommandFiles(dirPath: string): string[] {
+  const files = [];
+  const items = fs.readdirSync(dirPath);
 
-export const CommandList: Array<CommandRegistType> = [
-  PING,
-  HELP,
-]
+  for (const item of items) {
+    const fullPath = path.join(dirPath, item);
+    const stat = fs.statSync(fullPath);
 
-export default function CommandRegist(client: Client) {
-  let cmdSuccessRegist = 0
-  CommandList.map((cmd: any) => {
-    if (cmd !== undefined && cmd.data !== undefined) {
-      client.commands.set(cmd.data.name || "?", cmd)
-      cmdSuccessRegist++
+    if (stat.isDirectory()) {
+      files.push(...getCommandFiles(fullPath));
+    } else if (item.endsWith('commands.ts')) {
+      files.push(fullPath);
     }
-  })
-  console.log("共有${1}項指令成功登錄".replace("${1}", cmdSuccessRegist.toString()))
+  }
+
+  return files;
+}
+
+import { pathToFileURL } from 'url';
+
+// 使用工作目錄來解析 commands 資料夾，避免 import.meta 在部分設定下不可用
+const functionPath = path.join(process.cwd(), 'scripts', 'commands');
+const commandFiles = getCommandFiles(functionPath);
+
+const rest = new REST({ version: '10' }).setToken(process.env.TOKEN_KEY!);
+
+export default async function commandRegist(client: Client) {
+  let cmdSuccessRegist = 0;
+  for (const filePath of commandFiles) {
+    try {
+      const moduleUrl = pathToFileURL(filePath).href;
+      const mod = await import(moduleUrl);
+      const commands = (mod && (mod.default ?? mod)) || mod;
+      const commandArray = Array.isArray(commands) ? commands : [commands];
+
+      for (const command of commandArray) {
+        if (command && 'data' in command && 'execute' in command) {
+          client.commands.set(command.data.name, command);
+          cmdSuccessRegist++;
+          console.log(`成功登錄指令: ${command.data.name}`);
+        } else {
+          console.log(`[警告] 指令 ${filePath} 中的一個命令缺少 "data" 或 "execute" 屬性。`);
+        }
+      }
+    } catch (err) {
+      console.error(`載入指令檔案失敗: ${filePath}`, err);
+    }
+  }
+
+  
+    const commandsData = Array.from(client.commands.values()).map(command => command.data.toJSON());
+
+    await rest.put(
+      Routes.applicationCommands(client.user!.id),
+      { body: commandsData },
+    );
+  console.log(`共有${cmdSuccessRegist}項指令成功登錄`);
 }

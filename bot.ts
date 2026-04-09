@@ -1,7 +1,7 @@
 // Require the necessary discord.js classes
-import { Client, Collection, Events, GatewayIntentBits, EmbedBuilder, TextChannel, AttachmentBuilder } from 'discord.js';
+import { Client, Collection, Events, GatewayIntentBits, EmbedBuilder, TextChannel, AttachmentBuilder, REST, Routes } from 'discord.js';
 import { ColorConst, DevTestChoice, EnvConst } from './scripts/constants/constants';
-import CommandRegist from './scripts/commandRegist';
+import commandRegist from './scripts/commandRegist';
 import EventHandlersInit from './scripts/eventHandler';
 import { generateDailyMissions } from './scripts/constants/events';
 import { initDatabase } from './scripts/database';
@@ -11,14 +11,6 @@ import { autoBanSpammer } from './scripts/automod';
 // 啟動與初始化資料庫
 initDatabase();
 
-//Expend a "Commannds" variable
-//From https://stackoverflow.com/questions/62860164/stuck-with-adding-variable-to-discord-client-object-typescript
-declare module "discord.js" {
-	export interface Client {
-		commands: Collection<unknown, any>
-	}
-}
-
 // Create a new client instance
 const client = new Client({ intents: [
 	GatewayIntentBits.Guilds, 
@@ -27,17 +19,14 @@ const client = new Client({ intents: [
 	GatewayIntentBits.DirectMessages]
 });
 
-//Regist Commands
+// 擴充並初始化 commands 集合，供指令註冊與查找使用
 client.commands = new Collection();
-CommandRegist(client);
 
-// When the client is ready, run this code (only once).
-// The distinction between `client: Client<boolean>` and `readyClient: Client<true>` is important for TypeScript developers.
-// It makes some properties non-nullable.
-client.once(Events.ClientReady, readyClient => {
+client.once(Events.ClientReady, async (readyClient) => {
 	console.log(`Ready! Logged in as ${readyClient.user.tag}`);
-	const channelNoti = client.channels.cache.get(process.env.AnnouncementChannel!) as TextChannel;
-	const channelCommand = client.channels.cache.get(process.env.CommandChannel!) as TextChannel;
+	const channelNoti = readyClient.channels.cache.get(process.env.AnnouncementChannel!) as TextChannel;
+	const channelCommand = readyClient.channels.cache.get(process.env.CommandChannel!) as TextChannel;
+
 	var embed = new EmbedBuilder()
 		.setColor(ColorConst.EMBED_ANNOUN_COLOR)
 		.setTitle("重啟成功通知")
@@ -45,6 +34,14 @@ client.once(Events.ClientReady, readyClient => {
 	if (EnvConst.NODE_ENV !== DevTestChoice.DEVELOPMENT || (!DevTestChoice.isDisableOnlineEmbed && EnvConst.NODE_ENV === DevTestChoice.DEVELOPMENT)) {
 		channelNoti.send({ embeds: [embed] });
 	}
+
+	try {
+    console.log('開始刷新應用程式 (/) 指令。');
+		await commandRegist(readyClient);
+    console.log('成功重新載入應用程式 (/) 指令。');
+  } catch (error) {
+    console.error(error);
+  }
 
 	//EventHandlersInit(readyClient);
 
