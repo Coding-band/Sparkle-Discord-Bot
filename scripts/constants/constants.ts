@@ -41,11 +41,18 @@ export const EnvConst = {
   NODE_ENV: process.env.NODE_ENV,
   TOKEN_KEY: process.env.TOKEN_KEY,
 
+  LocalBackupDir: process.env.LocalBackupDir,
+  ExternalBackupDir: process.env.ExternalBackupDir,
+
   AnnouncementChannel: process.env.AnnouncementChannel,
   CommandChannel: process.env.CommandChannel,
   DebugLogChannel: process.env.DebugLogChannel,
   GamingChannel: process.env.GamingChannel,
   BotID: process.env.BotID,
+  GeneralChannels: process.env.GeneralChannels ? JSON.parse(process.env.GeneralChannels) : [],
+
+  SpammerChannel: process.env.SpammerChannel,
+  AutoModChannel: process.env.AutoModChannel,
 }
 
 /**
@@ -67,11 +74,11 @@ export const LanguageList: TextLanguage[] = [
 ]
 
 export const GreetingConst = {
-  morning_words : ["morning","gm","早晨","早","早安","安安"],
-  afternoon_words: ["afternoon","晏晝","午","午安","下午好"],
-  night_words : ["good night","gn","早唞","晚","晚安","晚上好"],
+  morning_words: ["morning", "gm", "早晨", "早", "早安", "安安"],
+  afternoon_words: ["afternoon", "晏晝", "午", "午安", "下午好"],
+  night_words: ["good night", "gn", "早唞", "晚", "晚安", "晚上好"],
 
-  morning_reaction : ["🌞","☀️","🌅","🌄","🌤","🌤️","⛅"],
-  afternoon_reaction : ["🍮","🍚","🍜","🍛","🧋","🏙️"],
-  night_reaction : ["🌛","🌜","⭐","🌕","🌅","🌄","🌃","🌉"],
+  morning_reaction: ["🌞", "☀️", "🌅", "🌄", "🌤", "🌤️", "⛅"],
+  afternoon_reaction: ["🍮", "🍚", "🍜", "🍛", "🧋", "🏙️"],
+  night_reaction: ["🌛", "🌜", "⭐", "🌕", "🌅", "🌄", "🌃", "🌉"],
 }

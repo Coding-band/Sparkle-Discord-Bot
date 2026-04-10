@@ -2,6 +2,7 @@
 import { Client } from 'discord.js';
 import cron from 'node-cron';
 import { sendDailyMissions } from './constants/events';
+import { startBackup } from './database';
 
 /**
  # ┌────────────── second (optional)
@@ -29,6 +30,14 @@ export default async function EventHandlersInit(client: Client) {
   // 每日任務 - 早上6點
   cron.schedule('0 0 6 * * *', () => {
     sendDailyMissions(client);
+  }, {
+    scheduled: true
+  });
+
+
+  // 每日備份 - 凌晨1點
+  cron.schedule('0 0 0 * * *', () => {
+    startBackup();
   }, {
     scheduled: true
   });
