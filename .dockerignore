@@ -1,0 +1,16 @@
+node_modules
+npm-debug.log
+.env
+.git
+.gitignore
+README.md
+LICENSE
+Test
+db/*.db
+logs/*.log
+temp
+Thumbs
+Videos
+Avatars
+Temp
+backups

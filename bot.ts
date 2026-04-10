@@ -1,6 +1,6 @@
 // Require the necessary discord.js classes
 import { Client, Events, GatewayIntentBits, EmbedBuilder, TextChannel } from 'discord.js';
-import { ColorConst, DevTestChoice, EnvConst } from './scripts/constants/constants';
+import { ColorConst, DevTestChoice } from './scripts/constants/constants';
 import commandRegist from './scripts/commandRegist';
 import EventHandlersInit from './scripts/event/eventHandler';
 import { initDatabase, initServerDbSetup } from './scripts/database';
@@ -8,6 +8,7 @@ import { sparkleAprilFools2025 } from './scripts/specials';
 import { autoBanSpammer } from './scripts/automod';
 import { restoreMissionCollectors } from './scripts/event/eventBuilder';
 import { greetingsReward } from './scripts/greetings';
+import { handleLLMReply } from './scripts/llmReply';
 
 // 啟動與初始化資料庫
 initDatabase();
@@ -21,15 +22,15 @@ const client = new Client({ intents: [
 });
 
 client.once(Events.ClientReady, async (readyClient) => {
-	console.log(`Ready! Logged in as ${readyClient.user.tag}`);
+	console.log(`${readyClient.user.tag}成功登入，花火已準備就緒！`);
 	const channelNoti = readyClient.channels.cache.get(process.env.AnnouncementChannel!) as TextChannel;
 	const channelCommand = readyClient.channels.cache.get(process.env.CommandChannel!) as TextChannel;
 
 	var embed = new EmbedBuilder()
 		.setColor(ColorConst.EMBED_ANNOUN_COLOR)
 		.setTitle("重啟成功通知")
-		.setDescription("我回來了！另外，所有指令將會在現在重新被執行。當前是在" + EnvConst.NODE_ENV);
-	if (EnvConst.NODE_ENV !== DevTestChoice.DEVELOPMENT || (!DevTestChoice.isDisableOnlineEmbed && EnvConst.NODE_ENV === DevTestChoice.DEVELOPMENT)) {
+		.setDescription("我回來了！另外，所有指令將會在現在重新被執行。當前是在" + process.env.NODE_ENV);
+	if (process.env.NODE_ENV !== DevTestChoice.DEVELOPMENT || (!DevTestChoice.isDisableOnlineEmbed && process.env.NODE_ENV === DevTestChoice.DEVELOPMENT)) {
 		channelNoti.send({ embeds: [embed] });
 	}
 
@@ -85,6 +86,9 @@ client.on(Events.MessageCreate, async (message) => {
 
 	//Greetings Reward
 	await greetingsReward(client, message, process.env.GeneralChannels as unknown as string[]);
+	
+	// LLM 回覆 (@機器人 或 回覆機器的訊息)
+	await handleLLMReply(client, message);
 });
 
 // Log in to Discord with your client's token

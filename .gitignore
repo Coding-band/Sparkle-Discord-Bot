@@ -131,4 +131,8 @@ dist
 ecosystem.config.js
 /assets
 *.sqlite
+*.db
 /db
+
+docker-compose.yml
+Dockerfile

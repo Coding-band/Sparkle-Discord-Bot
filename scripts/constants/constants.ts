@@ -33,29 +33,6 @@ export const ColorConst = {
 };
 
 /**
- * This is the Constant Category of Bot Environment
- */
-
-export const EnvConst = {
-  BotName: "焰錦遊魚",
-  NODE_ENV: process.env.NODE_ENV,
-  TOKEN_KEY: process.env.TOKEN_KEY,
-
-  LocalBackupDir: process.env.LocalBackupDir,
-  ExternalBackupDir: process.env.ExternalBackupDir,
-
-  AnnouncementChannel: process.env.AnnouncementChannel,
-  CommandChannel: process.env.CommandChannel,
-  DebugLogChannel: process.env.DebugLogChannel,
-  GamingChannel: process.env.GamingChannel,
-  BotID: process.env.BotID,
-  GeneralChannels: process.env.GeneralChannels ? JSON.parse(process.env.GeneralChannels) : [],
-
-  SpammerChannel: process.env.SpammerChannel,
-  AutoModChannel: process.env.AutoModChannel,
-}
-
-/**
  * This is the Constant Category of Language, which is for future locale translation usage
  * NOT IN USE NOW
  */

@@ -1,0 +1,31 @@
+services:
+  bot:
+    build:
+      dockerfile: Dockerfile
+    container_name: sparkle-bot
+    environment:
+      - PORT=3000
+      - NODE_ENV=production
+      - TZ=Asia/Taipei
+      - TOKEN_KEY=your_token_here
+      - BotID=YourBotId
+      - GuildID=YourGuildId
+      - AnnouncementChannel=channelId
+      - CommandChannel=channelId
+      - DebugLogChannel=channelId
+      - GamingChannel=channelId
+      - GeneralChannels=[channelId, channelId]
+
+      - SpammerChannel=channelId
+      - AutoModChannel=channelId
+
+      - OLLAMA_URL=http://host.docker.internal:11434
+      - OLLAMA_MODEL=gemma4:e2b
+      - LocalBackupDir=/app/backups/main
+      - ExternalBackupDir=/app/backups/sub
+    volumes:
+      - ./db:/app/db
+      - ./logs:/app/logs
+      - ./backups:/app/backups/main
+      - /path/to/real/folder:/app/backups/sub
+    restart: always
