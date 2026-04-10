@@ -41,3 +41,13 @@ export type EventInfo = {
   endTime: number; //活動完結時間
   execute: (() => Promise<void>)
 }
+
+export type UserData = {
+  userId: string;
+  userCoin: number;
+  userExp: number;
+  userTextCounts: number;
+  userVoiceCounts: number;
+  userItemList: string[]; //儲存用戶物品的JSON字串
+  lastGreetingTimestamp: number;
+}

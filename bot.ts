@@ -2,10 +2,12 @@
 import { Client, Events, GatewayIntentBits, EmbedBuilder, TextChannel } from 'discord.js';
 import { ColorConst, DevTestChoice, EnvConst } from './scripts/constants/constants';
 import commandRegist from './scripts/commandRegist';
-import EventHandlersInit from './scripts/eventHandler';
-import { initDatabase } from './scripts/database';
-import { sparkleAprilFools2025 } from './scripts/constants/specials';
+import EventHandlersInit from './scripts/event/eventHandler';
+import { initDatabase, initServerDbSetup } from './scripts/database';
+import { sparkleAprilFools2025 } from './scripts/specials';
 import { autoBanSpammer } from './scripts/automod';
+import { restoreMissionCollectors } from './scripts/event/eventBuilder';
+import { greetingsReward } from './scripts/greetings';
 
 // 啟動與初始化資料庫
 initDatabase();
@@ -35,13 +37,16 @@ client.once(Events.ClientReady, async (readyClient) => {
     console.log('開始刷新應用程式 (/) 指令。');
 		await commandRegist(readyClient);
     console.log('成功重新載入應用程式 (/) 指令。');
+
+		console.log('開始初始化資料庫伺服器專用資料表。');
+		initServerDbSetup("1238442418819305536");
+		console.log('成功初始化資料庫伺服器專用資料表。');
   } catch (error) {
     console.error(error);
   }
 
 	// 恢復離線期間發送但仍在可恢復時限內的任務 collectors（最多 24 小時）
 	try {
-		const { restoreMissionCollectors } = await import('./scripts/constants/events');
 		await restoreMissionCollectors(readyClient, 24);
 		console.log('已嘗試恢復最近任務 collectors');
 	} catch (e) {
@@ -77,6 +82,9 @@ client.on(Events.InteractionCreate, async interaction => {
 client.on(Events.MessageCreate, async (message) => {
 	//Auto Ban Spammer
 	await autoBanSpammer(client, message, process.env.SpammerChannel!, process.env.AutoModChannel!);
+
+	//Greetings Reward
+	await greetingsReward(client, message, process.env.GeneralChannels as unknown as string[]);
 });
 
 // Log in to Discord with your client's token
