@@ -1,7 +1,7 @@
 
 import { Client } from 'discord.js';
 import cron from 'node-cron';
-import { sendDailyMissions } from './constants/events';
+import { sendDailyMissions, sendLimitTimeMissions } from './constants/events';
 import { startBackup } from './database';
 
 /**
@@ -34,11 +34,16 @@ export default async function EventHandlersInit(client: Client) {
     scheduled: true
   });
 
-
   // 每日備份 - 凌晨1點
   cron.schedule('0 0 0 * * *', () => {
     startBackup();
   }, {
     scheduled: true
   });
-}
+
+  // 限時任務 - 隨機時間 (15-60s) 觸發
+  setTimeout(async() => {
+    await sendLimitTimeMissions(client);
+  }, 15 + Math.random() * 45000)
+
+};

@@ -5,8 +5,9 @@
 import { APIEmbedField, ActionRowBuilder, AttachmentBuilder, ButtonBuilder, ButtonStyle, Client, EmbedBuilder, MessageActionRowComponentBuilder, TextChannel, ComponentType, Message, ButtonInteraction } from "discord.js"
 import { EventInfo, EventProgress, EventTypeEnum } from "./types";
 import { mission_list as DailyMissionList } from "../../assets/json_data/daily_mission_list.json"
+import { limited_time_mission_list as LimitedTimeMissionList } from "../../assets/json_data/limited_time_mission_list.json"
 import { ColorConst } from "./constants";
-import { logDailyMission, hasUserDoneMissionToday, getTodayMissionCount, saveMissionMessage, getRecentMissionMessages } from "../database";
+import { logDailyMission, hasUserDoneMission, getTodayMissionCount, saveMissionMessage, getRecentMissionMessages } from "../database";
 
 //Global Event List
 export let EventList: Array<EventInfo> = [];
@@ -16,37 +17,64 @@ export async function sendDailyMissions(client: Client) {
 
   const randomChoiceIndex = Math.min(Math.round(Math.random() * DailyMissionList.length), DailyMissionList.length - 1);
   const missionId = `dailymission_${randomChoiceIndex}_${Date.now()}`;
-  const embed = await generateDailyMissions(client, randomChoiceIndex, channelGaming, missionId);
+  const expireTime = new Date().setHours(23, 59, 59, 999); // 設定為今天午夜過後
+  const embed = await generateDailyMissions(client, 27, channelGaming, missionId, expireTime);
   const sentMessage = await sendEmbedMessage(embed); 
   await eventEmbedInteractiveHandler(embed.options, sentMessage, embed.files[0]);
 
 }
 
+export async function sendLimitTimeMissions(client: Client, autoLoop: boolean = true) {
+  const channelGaming = client.channels.cache.get(process.env.GamingChannel!) as TextChannel;
+
+  const randomChoiceIndex = Math.min(Math.round(Math.random() * LimitedTimeMissionList.length), LimitedTimeMissionList.length - 1);
+  const missionId = `limittimemission_${randomChoiceIndex}_${Date.now()}`;
+  const expireTime = Date.now() + 8*60*60*1000; // 設定為8小時後過期
+  const embed = await generateLimitTimeMissions(client, randomChoiceIndex, channelGaming, missionId, expireTime);
+  const sentMessage = await sendEmbedMessage(embed); 
+  await eventEmbedInteractiveHandler(embed.options, sentMessage, embed.files[0]);
+
+  if(autoLoop) {
+    // 隨機時間（1~3小時）後再次觸發限時任務
+    const randomDelay = (8 + Math.random()*4) * 60 * 60 * 1000; // 8小時基礎 + 0~4小時的隨機延遲
+    setTimeout(async() => {
+      await sendLimitTimeMissions(client);
+    }, randomDelay);
+    
+  }
+}
+
 // 生成每日任務Embed
-export async function generateDailyMissions(client: Client, randomChoiceIndex: number, channel: TextChannel, missionId: string) {
+export async function generateDailyMissions(client: Client, randomChoiceIndex: number, channel: TextChannel, missionId: string, expireTime: number) {
 
   const randomChoiceMission = DailyMissionList[randomChoiceIndex];
   const imagePath = randomChoiceMission.img ? './assets/images/' + randomChoiceMission.img : undefined;
-
+  
   // 建立互動式任務訊息
   const embedItem = await createInteractiveEventMessage({
     missionId: missionId, // 用於資料庫紀錄與 Collector 恢復的識別
+    expireTime: expireTime, // 用於任務過期檢查
     channel: channel,
     title: `每日任務`,
     imagePath: imagePath,
     fields: [{ title: randomChoiceMission.mission_title, desc: randomChoiceMission.mission_desc, isSingleLine: false }],
     eventType: EventTypeEnum.Daily,
-    initialProgress: { dailyEventFinishedCount: await getTodayMissionCount(missionId) },
+    initialProgress: { finishedCount: await getTodayMissionCount(missionId) },
     embedColor: ColorConst.EMBED_GAMING_DAILY_MISSION_COLOR,
     choices: randomChoiceMission.choices,
     choicesAction: randomChoiceMission.choices_action,
     onInteraction: async (interaction, action, updateEmbed) => {
       switch (action) {
         case "MISSION_FINISH": {
+          // 檢查任務是否已過期
+          if (Date.now() > expireTime) {
+            await interaction.reply({ content: '很抱歉，任務已經過期了！', ephemeral: true });
+            break;
+          }
           // 檢查使用者是否已經完成過該訊息的任務了，避免重複完成
-          const hasDone = await hasUserDoneMissionToday(interaction.user.id, missionId);
+          const hasDone = await hasUserDoneMission(interaction.user.id, missionId);
           if (hasDone) {
-            await interaction.reply({ content: '您已經完成任務/選擇了！', ephemeral: true });
+            await interaction.reply({ content: '您已經完成任務了！', ephemeral: true });
             break;
           }
 
@@ -55,7 +83,59 @@ export async function generateDailyMissions(client: Client, randomChoiceIndex: n
           const currentPeopleCount = await getTodayMissionCount(missionId);
 
           // 更新 Embed（透過提供的回呼函式）
-          await updateEmbed({ dailyEventFinishedCount: currentPeopleCount });
+          await updateEmbed({ finishedCount: currentPeopleCount });
+
+          // 回覆使用者
+          await interaction.reply({ content: randomChoiceMission.choices_reply.replace('{count}', currentPeopleCount.toString()), ephemeral: true });
+          break;
+        }
+      }
+    }
+  } as EmbedOptions);
+
+  return embedItem;
+}
+
+// 生成限時任務Embed
+export async function generateLimitTimeMissions(client: Client, randomChoiceIndex: number, channel: TextChannel, missionId: string, expireTime: number) {
+
+  const randomChoiceMission = LimitedTimeMissionList[randomChoiceIndex];
+  const imagePath = randomChoiceMission.img ? './assets/images/' + randomChoiceMission.img : undefined;
+
+  // 建立互動式任務訊息
+  const embedItem = await createInteractiveEventMessage({
+    missionId: missionId, // 用於資料庫紀錄與 Collector 恢復的識別
+    expireTime: expireTime, // 用於任務過期檢查
+    channel: channel,
+    title: `限時任務`,
+    imagePath: imagePath,
+    fields: [{ title: randomChoiceMission.mission_title, desc: randomChoiceMission.mission_desc, isSingleLine: false },{title: "完結時間", desc: `<t:${Math.floor(expireTime / 1000)}:f>`, isSingleLine: false}],
+    eventType: EventTypeEnum.LimitTimeMission,
+    initialProgress: { limitEventProgress: await getTodayMissionCount(missionId), limitEventMax: randomChoiceMission?.mission_max_progress ?? 16 },
+    embedColor: ColorConst.EMBED_GAMING_LIMIT_MISSION_COLOR,
+    choices: randomChoiceMission.choices,
+    choicesAction: randomChoiceMission.choices_action,
+    onInteraction: async (interaction, action, updateEmbed) => {
+      switch (action) {
+        case "MISSION_FINISH": {
+          // 檢查任務是否已過期
+          if (Date.now() > expireTime) {
+            await interaction.reply({ content: '很抱歉，任務已經過期了！', ephemeral: true });
+            break;
+          }
+          // 檢查使用者是否已經完成過該訊息的任務了，避免重複完成
+          const hasDone = await hasUserDoneMission(interaction.user.id, missionId);
+          if (hasDone) {
+            await interaction.reply({ content: '您已經完成任務了！', ephemeral: true });
+            break;
+          }
+
+          // 紀錄進資料庫（以 message_id + channel_id）
+          await logDailyMission(interaction.user.id, action, missionId);
+          const currentPeopleCount = await getTodayMissionCount(missionId);
+
+          // 更新 Embed（透過提供的回呼函式）
+          await updateEmbed({ limitEventProgress: currentPeopleCount });
 
           // 回覆使用者
           await interaction.reply({ content: randomChoiceMission.choices_reply.replace('{count}', currentPeopleCount.toString()), ephemeral: true });
@@ -81,6 +161,7 @@ export type EmbedField = {
 
 export type EmbedOptions = {
   missionId?: string; // 用於資料庫紀錄與 Collector 恢復的識別, baseMissionId_index
+  expireTime: number; // 用於任務過期檢查
   channel: TextChannel;
   title: string;
   desc?: string | null;
@@ -98,7 +179,15 @@ export type EmbedOptions = {
   ) => Promise<void>;
 }
 
-function eventEmbedBuilder(title?: string, desc?: string | null, image?: AttachmentBuilder, fields?: Array<EmbedField>, eventType?: EventTypeEnum, eventProgress?: EventProgress, embedColor?: number) {
+function eventEmbedBuilder(
+  title?: string, 
+  desc?: string | null, 
+  image?: AttachmentBuilder, 
+  fields?: Array<EmbedField>, 
+  eventType?: EventTypeEnum, 
+  eventProgress?: EventProgress, 
+  embedColor?: number
+) {
   let embed = new EmbedBuilder()
     .setTitle(title || null)
     .setDescription(desc || null)
@@ -110,11 +199,49 @@ function eventEmbedBuilder(title?: string, desc?: string | null, image?: Attachm
       return ({ name: field.title, value: field.desc, inline: field.isSingleLine || false } as APIEmbedField)
     }))
     switch (eventType) {
-      case EventTypeEnum.Daily: { embed.addFields({ name: "任務進度", value: `共有${eventProgress?.dailyEventFinishedCount}位開拓者完成了任務`, inline: false } as APIEmbedField); break; }
+      case EventTypeEnum.Daily: { 
+        embed.addFields({ 
+          name: "任務進度", 
+          value: `共有${eventProgress?.finishedCount}位開拓者完成了任務`, 
+          inline: false 
+        } as APIEmbedField); 
+        break; 
+      }
+      case EventTypeEnum.LimitTimeMission: { 
+        embed.addFields({
+          name: "任務進度", 
+          value: eventProgressBarBuilder(eventProgress?.limitEventProgress || 0, eventProgress?.limitEventMax || 16) + `  ${eventProgress?.limitEventProgress || 0}/${eventProgress?.limitEventMax || 16}`, 
+          inline: false 
+        } as APIEmbedField); 
+        break; 
+      }
     }
   }
 
   return embed;
+}
+
+function eventProgressBarBuilder(current: number, total: number, size: number = 16, blockList: string[] = ["⬜","🟥","🟧","🟨","🟩"]) {
+  if (total <= 0) total = 1; // 避免除以 0
+  const progress = Math.round((current / total) * size);
+  const cappedProgress = Math.max(0, Math.min(size, progress));
+
+  // blockList[0] 為空格，之後依序為進度增加的符號
+  // 將進度條劃分為 (blockList.length - 1) 個等分色階
+  const levels = Math.max(1, blockList.length - 1);
+
+  let bar = "";
+  for (let i = 1; i <= size; i++) {
+    if (i <= cappedProgress) {
+      // 計算該格屬於哪個色階（1..levels）
+      const colorIndex = Math.ceil((i * levels) / size);
+      bar += blockList[colorIndex] ?? blockList[blockList.length - 1];
+    } else {
+      bar += blockList[0];
+    }
+  }
+
+  return bar;
 }
 
 function eventButtonBuilder(text: string, style: ButtonStyle, id: string) {
@@ -154,7 +281,7 @@ export async function sendEmbedMessage(
 
   // 備份訊息 ID 與頻道 ID 到資料庫，以便未來恢復 Collector
   if (!options.missionId || !sentMessage.id || !options.channel.id) return sentMessage; // missionId 是可選的，但如果沒有就不紀錄了
-  await saveMissionMessage(options.missionId, sentMessage.id, options.channel.id);
+  await saveMissionMessage(options.missionId, sentMessage.id, options.channel.id, options.expireTime);
 
   return sentMessage;
 }
@@ -233,7 +360,10 @@ export async function restoreMissionCollectors(client: Client, recentHours: numb
         const result = (() => {
           switch (type) {
             case 'dailymission': {
-              return generateDailyMissions(client, index, channel, missionId);
+              return generateDailyMissions(client, index, channel, missionId, row.expire_time);
+            }
+            case 'limittimemission': {
+              return generateLimitTimeMissions(client, index, channel, missionId, row.expire_time);
             }
             default: {
               console.warn(`不支援的 mission type ${type}，跳過恢復`);
@@ -241,7 +371,6 @@ export async function restoreMissionCollectors(client: Client, recentHours: numb
             }
           }
         })();
-        console.log("embedData result", result);
         if (!result) continue;
 
         const embedData = await result;

@@ -3,11 +3,12 @@ import path from 'path';
 import fs from 'fs';
 
 // 建立或連線到 SQLite 資料庫
-const dbPath = path.resolve(process.cwd(), './db/sparkle.db');
+const dbPath = path.resolve(path.join(process.cwd(), 'db'), 'sparkle.db');
 const db = new sqlite3.Database(dbPath);
 
 // 初始化資料庫資料表
 export function initDatabase() {
+    ensureDirectoryExists(path.join(process.cwd(), 'db'));
     db.serialize(() => {
         db.run(`
             CREATE TABLE IF NOT EXISTS daily_mission_logs (
@@ -25,7 +26,8 @@ export function initDatabase() {
                 mission_id TEXT NOT NULL UNIQUE,
                 message_id TEXT NOT NULL,
                 channel_id TEXT NOT NULL,
-                timestamp INTEGER NOT NULL
+                expire_time INTEGER NOT NULL,
+                record_timestamp INTEGER NOT NULL
             )
         `);
     });
@@ -78,8 +80,8 @@ export function logDailyMission(userId: string, action: string, missionId: strin
     });
 }
 
-// 檢查用戶今天是否已經完成該任務（基於 message_id）
-export function hasUserDoneMissionToday(userId: string, missionId: string): Promise<boolean> {
+// 檢查用戶是否已經完成該任務（基於 message_id）
+export function hasUserDoneMission(userId: string, missionId: string): Promise<boolean> {
     return new Promise((resolve, reject) => {
         db.get(
             `SELECT COUNT(*) as count FROM daily_mission_logs WHERE user_id = ? AND mission_id = ?`,
@@ -109,6 +111,7 @@ export function getTodayMissionCount(missionId: string): Promise<number> {
     });
 }
 
+// 根據 mission_id 取得對應的訊息 ID 和頻道 ID
 export function getMissionMessage(missionId: string): Promise<any | null> {
     return new Promise((resolve, reject) => {
         db.get(`SELECT mission_id, message_id, channel_id, timestamp FROM mission_messages WHERE mission_id = ?`, [missionId], (err, row) => {
@@ -119,11 +122,11 @@ export function getMissionMessage(missionId: string): Promise<any | null> {
 }
 
 // 儲存發送的任務訊息 mapping
-export function saveMissionMessage(missionId: string, messageId: string, channelId: string): Promise<void> {
+export function saveMissionMessage(missionId: string, messageId: string, channelId: string, expireTime: number): Promise<void> {
     return new Promise((resolve, reject) => {
         const timestamp = Date.now();
-        db.run(`INSERT INTO mission_messages (mission_id, message_id, channel_id, timestamp) VALUES (?, ?, ?, ?)`,
-            [missionId, messageId, channelId, timestamp],
+        db.run(`INSERT INTO mission_messages (mission_id, message_id, channel_id, expire_time, record_timestamp) VALUES (?, ?, ?, ?, ?)`,
+            [missionId, messageId, channelId, expireTime, timestamp],
             function (err) {
                 if (err) reject(err);
                 else resolve();
@@ -132,9 +135,10 @@ export function saveMissionMessage(missionId: string, messageId: string, channel
     });
 }
 
+// 取得最近的任務訊息列表（例如過去 24 小時內）
 export function getRecentMissionMessages(sinceTimestamp: number): Promise<Array<any>> {
     return new Promise((resolve, reject) => {
-        db.all(`SELECT mission_id, message_id, channel_id, timestamp FROM mission_messages WHERE timestamp >= ?`, [sinceTimestamp], (err, rows) => {
+        db.all(`SELECT mission_id, message_id, channel_id, expire_time, record_timestamp FROM mission_messages WHERE record_timestamp >= ?`, [sinceTimestamp], (err, rows) => {
             if (err) reject(err);
             else resolve(rows || []);
         });

@@ -26,7 +26,7 @@ export enum EventTypeEnum{
 
 //以下所有項目均可為undefined
 export type EventProgress = {
-  dailyEventFinishedCount ?: number; //完成該每日任務的用戶數目
+  finishedCount ?: number; //完成該每日任務的用戶數目
   limitEventMax ?: number; //該限時/挑戰任務的目標進度
   limitEventProgress ?: number; //該限時/挑戰任務的當前進度
   choiceEventData ?: []; //該分歧事件每一選項的選擇次數

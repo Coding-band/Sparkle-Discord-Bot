@@ -131,3 +131,4 @@ dist
 ecosystem.config.js
 /assets
 *.sqlite
+/db
