@@ -182,9 +182,21 @@ export function getRecentMissionMessages(sinceTimestamp: number): Promise<Array<
 // 取得用戶資料
 export function getUserData(userId: string, guildId: string): Promise<any | null> {
     return new Promise((resolve, reject) => {
-        db.get(`SELECT * FROM server_${guildId}_data WHERE user_id = ?`, [userId], (err, row) => {
-            if (err) reject(err);
-            else resolve(row || null);
+        // Check whether the server-specific table exists before querying, if not exist then create one and return null
+        db.get(`SELECT name FROM sqlite_master WHERE type='table' AND name='server_${guildId}_data'`, (err, row) => {
+            if (err) {
+                reject(err);
+            } else if (!row) {
+                // 如果表不存在，先創建表
+                initServerDbSetup(guildId);
+                resolve(null); // 表剛創建，沒有資料，返回 null
+            } else {
+                // 表存在，正常查詢用戶資料
+                db.get(`SELECT * FROM server_${guildId}_data WHERE user_id = ?`, [userId], (err, row) => {
+                    if (err) reject(err);
+                    else resolve(row || null);
+                });
+            }
         });
     });
 }

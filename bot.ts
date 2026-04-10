@@ -38,10 +38,6 @@ client.once(Events.ClientReady, async (readyClient) => {
     console.log('開始刷新應用程式 (/) 指令。');
 		await commandRegist(readyClient);
     console.log('成功重新載入應用程式 (/) 指令。');
-
-		console.log('開始初始化資料庫伺服器專用資料表。');
-		initServerDbSetup("1238442418819305536");
-		console.log('成功初始化資料庫伺服器專用資料表。');
   } catch (error) {
     console.error(error);
   }
