@@ -1,8 +1,8 @@
 
 import { Client } from 'discord.js';
 import cron from 'node-cron';
-import { sendDailyMissions, sendLimitTimeMissions } from './constants/events';
-import { startBackup } from './database';
+import { sendDailyMissions, sendLimitTimeMissions } from './events';
+import { startBackup } from '../database';
 
 /**
  # ┌────────────── second (optional)
@@ -44,6 +44,6 @@ export default async function EventHandlersInit(client: Client) {
   // 限時任務 - 隨機時間 (15-60s) 觸發
   setTimeout(async() => {
     await sendLimitTimeMissions(client);
-  }, 15 + Math.random() * 45000)
+  }, 15000 + Math.random() * 45000)
 
 };
