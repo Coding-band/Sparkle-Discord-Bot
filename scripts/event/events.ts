@@ -15,7 +15,7 @@ export async function sendDailyMissions(client: Client) {
   const randomChoiceIndex = Math.min(Math.round(Math.random() * DailyMissionList.length), DailyMissionList.length - 1);
   const missionId = `dailymission_${randomChoiceIndex}_${Date.now()}`;
   const expireTime = new Date().setHours(23, 59, 59, 999); // 設定為今天午夜過後
-  const embed = await generateDailyMissions(client, 27, channelGaming, missionId, expireTime);
+  const embed = await generateDailyMissions(client, randomChoiceIndex, channelGaming, missionId, expireTime);
   const sentMessage = await sendEmbedMessage(embed); 
   await eventEmbedInteractiveHandler(embed.options, sentMessage, embed.files[0]);
 
