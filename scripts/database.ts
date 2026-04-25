@@ -169,10 +169,12 @@ export function saveMissionMessage(missionId: string, messageId: string, channel
     });
 }
 
-// 取得最近的任務訊息列表（例如過去 24 小時內）
+// 取得最近的任務訊息列表（或尚未過期的任務，不受從 record_timestamp 限制）
 export function getRecentMissionMessages(sinceTimestamp: number): Promise<Array<any>> {
     return new Promise((resolve, reject) => {
-        db.all(`SELECT mission_id, message_id, channel_id, expire_time, record_timestamp FROM mission_list WHERE record_timestamp >= ?`, [sinceTimestamp], (err, rows) => {
+        // 放寬查詢條件：紀錄時間在 given 範圍內，或者其 expire_time 還沒到期的任務（確保像是無限期警告按鈕能永遠恢復）
+        const now = Date.now();
+        db.all(`SELECT mission_id, message_id, channel_id, expire_time, record_timestamp FROM mission_list WHERE record_timestamp >= ? OR expire_time > ?`, [sinceTimestamp, now], (err, rows) => {
             if (err) reject(err);
             else resolve(rows || []);
         });

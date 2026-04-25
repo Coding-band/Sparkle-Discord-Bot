@@ -17,11 +17,12 @@ export type EmbedOptions = {
   desc?: string | null;
   imagePath?: string;
   fields?: Array<EmbedField>;
-  eventType: EventTypeEnum;
+  eventType?: EventTypeEnum;
   initialProgress: EventProgress;
   embedColor?: number;
   choices: string[];
   choicesAction?: string[];
+  choicesStyle?: ButtonStyle[];
   onInteraction: (
     interaction: ButtonInteraction,
     action: string,
@@ -127,7 +128,8 @@ export async function createInteractiveEventMessage(options: EmbedOptions) {
   const buttons = new ActionRowBuilder<MessageActionRowComponentBuilder>();
   options.choices.forEach((choice: string, indexBtn: number) => {
     const actionParam = options.choicesAction ? options.choicesAction[indexBtn] : `btn${indexBtn}`;
-    buttons.addComponents(eventButtonBuilder(choice, ButtonStyle.Primary, `${options.missionId}_${actionParam}`));
+    const btnStyle = options.choicesStyle ? options.choicesStyle[indexBtn] : ButtonStyle.Primary;
+    buttons.addComponents(eventButtonBuilder(choice, btnStyle, `${options.missionId}_${actionParam}`));
   });
 
   return { embeds: [missionEmbed], files: [imageFile], components: [buttons], options: options };
@@ -219,7 +221,7 @@ export async function restoreMissionCollectors(client: Client, recentHours: numb
         const index = parseInt(parts[1]); // 例如 0
 
         // 根據 type 和 index 重新生成 Embed 的內容
-        const result = (() => {
+        const resultPromise = (() => {
           switch (type) {
             case 'dailymission': {
               return generateDailyMissions(client, index, channel, missionId, row.expire_time);
@@ -227,15 +229,18 @@ export async function restoreMissionCollectors(client: Client, recentHours: numb
             case 'limittimemission': {
               return generateLimitTimeMissions(client, index, channel, missionId, row.expire_time);
             }
+            case 'adminSpamWarning': {
+              return import('../commands/admin/index').then(mod => mod.generateAdminSpamWarning(client, channel, missionId, row.expire_time));
+            }
             default: {
               console.warn(`不支援的 mission type ${type}，跳過恢復`);
               return undefined;
             }
           }
         })();
-        if (!result) continue;
+        if (!resultPromise) continue;
 
-        const embedData = await result;
+        const embedData = await resultPromise;
         await eventEmbedInteractiveHandler(embedData.options, message, embedData.files[0]);
         
         console.log(`成功恢復 mission ${missionId} 的 Collector`);
