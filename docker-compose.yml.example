@@ -23,6 +23,8 @@ services:
       - OLLAMA_MODEL=gemma4:e2b
       - LocalBackupDir=/app/backups/main
       - ExternalBackupDir=/app/backups/sub
+
+      - AdminList=["417665898548166678","YourDiscordId"]
     volumes:
       - ./db:/app/db
       - ./logs:/app/logs

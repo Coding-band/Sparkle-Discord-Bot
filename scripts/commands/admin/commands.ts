@@ -18,6 +18,13 @@ export default {
 
   async execute(interaction: ChatInputCommandInteraction) {
     const mod = await import('./index');
+
+    // 檢查是否管理員（在AdminList中）
+    const adminList: string[] = process.env.AdminList ? JSON.parse(process.env.AdminList) : [];
+    if (!adminList.includes(interaction.user.id)) {
+      await interaction.reply({ content: 'You do not have permission to use this command! 你沒有權限使用這個指令！', ephemeral: true });
+      return;
+    }
     
     // 預留位置：未來有其他 subcommand 時可透過 switch-case 或 if-else 分發
     const subcommand = interaction.options.getSubcommand();
